@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Study Planner</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9fafc;
+      color: #333;
+    }
+    header {
+      background: #4f46e5;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+    nav button {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+    nav button.active, nav button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    main {
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 0.4rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button.submit-btn {
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.2rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button.submit-btn:hover {
+      background: #4338ca;
+    }
+
+    #logs {
+      list-style: none;
+      padding: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    #logs li.success { color: green; }
+    #logs li.error { color: red; }
+    #logs li.info { color: #555; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI Study Planner</h1>
+    <nav>
+      <button class="active" onclick="openTab('home')">Home</button>
+      <button onclick="openTab('input')">Add Study Data</button>
+      <button onclick="openTab('logs')">Logs</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Home Tab -->
+    <div id="home" class="tab active">
+      <div class="card">
+        <h2>Welcome to AI Study Planner 📚</h2>
+        <p>This system helps you organize your study sessions and track progress with AI-driven recommendations.</p>
+        <p>Use the navigation menu to add study data or view logs.</p>
+      </div>
+    </div>
+
+    <!-- Input Tab -->
+    <div id="input" class="tab">
+      <div class="card">
+        <h2>Add Study Data</h2>
+        <form id="studyForm">
+          <label for="subject">Subject</label>
+          <input type="text" id="subject" required placeholder="e.g. Mathematics">
+
+          <label for="hours">Study Hours</label>
+          <input type="number" id="hours" required min="1" placeholder="e.g. 2">
+
+          <label for="difficulty">Difficulty Level</label>
+          <select id="difficulty">
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+
+          <label for="notes">Additional Notes</label>
+          <textarea id="notes" rows="3" placeholder="Any extra notes..."></textarea>
+
+          <button class="submit-btn" type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Logs Tab -->
+    <div id="logs" class="tab">
+      <div class="card">
+        <h2>Activity Logs</h2>
+        <ul id="logList"></ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Tab switching
+    function openTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // Form + Logs
+    const form = document.getElementById('studyForm');
+    const logs = document.getElementById('logList');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        subject: form.subject.value,
+        hours: form.hours.value,
+        difficulty: form.difficulty.value,
+        notes: form.notes.value
+      };
+
+      logMessage("📩 Submitted: " + JSON.stringify(data), "info");
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        logMessage("✅ Backend Response: " + JSON.stringify(result), "success");
+      } catch (err) {
+        logMessage("❌ Error: Could not connect to backend!", "error");
+      }
+    });
+
+    function logMessage(msg, type="info") {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      li.className = type;
+      logs.appendChild(li);
+    }
+  </script>
+</body>
+</html>
